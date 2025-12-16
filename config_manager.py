@@ -3,19 +3,13 @@ import os
 
 CONFIG_FILE = "config.json"
 
-# ==========================================
-# F1 2026 全量票务数据库 (28组任务)
-# ==========================================
 DEFAULT_TASKS = [
-    # --- 1. A 铂金 ---
     {
         "name": "A铂金-三日",
         "show_id": "6931340104da960001241d03",
         "session_id": "693134024996310001245614",
         "targets": {"693134024996310001245615": "A铂金-三日"}
     },
-
-    # --- 2. A 看台 (包含上下层，分三日/周五/周六/周日) ---
     {
         "name": "A看台-三日",
         "show_id": "693133c84996310001244e59",
@@ -52,8 +46,6 @@ DEFAULT_TASKS = [
             "693133c904da9600012415bf": "A下-周日"
         }
     },
-
-    # --- 3. B 看台 ---
     {
         "name": "B看台-三日",
         "show_id": "693132f64996310001244995",
@@ -78,8 +70,6 @@ DEFAULT_TASKS = [
         "session_id": "693132f749963100012449fe",
         "targets": {"693132f74996310001244a00": "B看台-周日"}
     },
-
-    # --- 4. H 看台 ---
     {
         "name": "H看台-三日",
         "show_id": "6931529204da960001255be6",
@@ -104,8 +94,6 @@ DEFAULT_TASKS = [
         "session_id": "693152944996310001259593",
         "targets": {"693152944996310001259594": "H看台-周日"}
     },
-
-    # --- 5. K 看台 ---
     {
         "name": "K看台-三日",
         "show_id": "693152ad04da960001255d56",
@@ -130,16 +118,12 @@ DEFAULT_TASKS = [
         "session_id": "693152ae04da960001255db8",
         "targets": {"693152ae04da960001255dbd": "K看台-周日"}
     },
-
-    # --- 6. E 看台 (仅三日) ---
     {
         "name": "E看台-三日",
         "show_id": "693152c604da960001255ee5",
         "session_id": "693152c74996310001259825",
         "targets": {"693152c74996310001259827": "E看台-三日"}
     },
-
-    # --- 7. 草地 (C/F/J) ---
     {
         "name": "草地-三日",
         "show_id": "693153534996310001259a9f",
@@ -150,16 +134,12 @@ DEFAULT_TASKS = [
             "6931535304da96000125618c": "草地J-三日"
         }
     },
-
-    # --- 8. 围场俱乐部 ---
     {
         "name": "围场-三日",
         "show_id": "6933958049963100013a5c39",
         "session_id": "6933958104da9600013a271a",
         "targets": {"6933958104da9600013a271b": "Paddock Club"}
     },
-
-    # --- 9. T1 Club (一号弯俱乐部) ---
     {
         "name": "T1 Club-三日",
         "show_id": "6937d3ce499631000168f5c0",
@@ -184,8 +164,6 @@ DEFAULT_TASKS = [
         "session_id": "6937d3ce04da96000168c487",
         "targets": {"6937d3cf04da96000168c489": "T1 Club-周日"}
     },
-
-    # --- 10. T16 Club (巅峰区/冲刺俱乐部) ---
     {
         "name": "T16 Club-三日",
         "show_id": "6932f40a04da9600013549e6",
@@ -244,23 +222,18 @@ class ConfigManager:
 
                 if "tasks" not in data:
                     data["tasks"] = DEFAULT_TASKS
-
-                # 初始化默认字段
                 if "tg_master_switch" not in data:
                     data["tg_master_switch"] = True
                 if "notification_rules" not in data:
                     data["notification_rules"] = {}
-
                 return data
         except Exception:
             return None
 
     @staticmethod
     def save_config(cookie, tg_token, tg_chat_id, tg_master_switch, notification_rules, refresh_interval=3):
-        """保存配置 (新增 rules 参数)"""
         current_data = DEFAULT_CONFIG.copy()
 
-        # 尝试保留旧数据
         if os.path.exists(CONFIG_FILE):
             try:
                 with open(CONFIG_FILE, "r", encoding="utf-8") as f:

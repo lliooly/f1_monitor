@@ -36,7 +36,6 @@ class TGBot:
                 success, msg = TGBot.send_message(token, chat_id, text)
                 if not success:
                     print(f"报警发送失败 ({i + 1}/{repeat_count}): {msg}")
-                time.sleep(1)  # 避免触发 TG 频率限制
+                time.sleep(1)
 
-        # 另起线程发送，不卡住监控逻辑
         threading.Thread(target=_run, daemon=True).start()
