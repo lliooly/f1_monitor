@@ -2,7 +2,7 @@ import customtkinter as ctk
 from datetime import datetime
 import os
 import time
-import math  # 用于计算网格行数
+import math
 
 from config_manager import ConfigManager
 from config_ui import ConfigWindow
@@ -15,7 +15,7 @@ class MonitorWindow(ctk.CTk):
         self.config_data = config_data
         self.show_config_callback = show_config_callback
 
-        self.title("F1 票务监控 Pro - 全景大屏版")
+        self.title("F1 票务监控")
         self.geometry("1000x750")  # 加宽窗口以容纳5列
         ctk.set_appearance_mode("Dark")
 
