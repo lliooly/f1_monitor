@@ -1,7 +1,7 @@
 {
-    "cookie": "acw_tc=ac11000117658668971064224e6c3107a28a86ddca3b910feed06e12246bba",
-    "tg_token": "8549428180:AAEYU4OPe9RYouGL6v45k-jMAkVKPnJbGI8",
-    "tg_chat_id": "8040727513",
+    "cookie": "please_read_README.md_2_configure",
+    "tg_token": "Your_TelegramBot_Token",
+    "tg_chat_id": "Your_TelegramBot_ChatId",
     "tg_switch": false,
     "notification_rules": {
         "A上-三日": false,

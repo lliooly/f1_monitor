@@ -40,9 +40,8 @@ class TicketMonitor:
 
     def _scan_all_tasks(self, tasks):
         all_counts = {}
-        found_tickets_for_alert = []  # 只有允许通知的才放进这里
+        found_tickets_for_alert = []
 
-        # 读取配置规则
         rules = self.config.get("notification_rules", {})
 
         for task in tasks:
@@ -75,10 +74,7 @@ class TicketMonitor:
                         all_counts[zone_name] = count
 
                         if count > 0:
-                            # === 关键逻辑：过滤通知 ===
-                            # 1. 检查总开关
                             master_on = self.config.get("tg_master_switch", True)
-                            # 2. 检查单项开关 (默认 True)
                             item_on = rules.get(zone_name, True)
 
                             if master_on and item_on:
@@ -94,7 +90,6 @@ class TicketMonitor:
             self.log(f"!!! 触发报警: {found_tickets_for_alert}")
             self._trigger_alert(found_tickets_for_alert)
         else:
-            # 如果有票但没触发报警(被屏蔽了)，只在日志简单提一句
             has_ticket = any(v > 0 for v in all_counts.values())
             status = "发现余票(已屏蔽通知)" if has_ticket else "暂无余票"
             self.log(f"扫描完成: {status}")
