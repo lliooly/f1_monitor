@@ -1,4 +1,4 @@
-# 🏎️ F1 Ticket Hunter (Docker Web Edition)
+# 🏎️ F1 Ticket Monitor (Docker Web Edition)
 
 F1 上海站票务监控工具。
 
@@ -64,9 +64,28 @@ docker-compose up -d --build
 
 A: 由于网络环境问题，如果无法拉取 `python:3.13-slim`，建议使用离线导入方式：
 
-1. 在能联网的机器下载镜像：`docker save -o python.tar python:3.13-slim`
-2. 上传到服务器并导入：`docker load -i python.tar`
-3. 修改 Dockerfile 使用导入的镜像 ID。
+1. 在docker desktop的settings中找到docker engine
+2. 将内容修改为
+```
+{
+  "builder": {
+    "gc": {
+      "defaultKeepStorage": "20GB",
+      "enabled": true
+    }
+  },
+  "experimental": false,
+  "features": {
+    "buildkit": true
+  },
+  "registry-mirrors": [
+    "https://docker.1ms.run",
+    "https://docker.m.ixdev.cn"
+  ]
+}
+```
+3. 点击Apply
+
 
 **Q: 如何更新代码?**
 
