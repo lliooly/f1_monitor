@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Ticket Hunter Web</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --card-bg: #2b2b2b;
+            --input-bg: #333;
+            --text-color: #e0e0e0;
+            --accent-green: #2CC985;
+            --accent-red: #C92C2C;
+            --accent-blue: #3B8ED0;
+            --highlight: #00FF00;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        /* Header & Buttons */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #444;
+        }
+        .title { font-size: 24px; font-weight: bold; }
+        .btn {
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            margin-left: 8px;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.8; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-start { background-color: var(--accent-green); }
+        .btn-stop { background-color: var(--accent-red); }
+        .btn-settings { background-color: var(--accent-blue); }
+
+        /* Grid Layout */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background-color: var(--card-bg);
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+        .card-title { font-size: 13px; font-weight: bold; margin-bottom: 5px; height: 35px; display: flex; align-items: center; justify-content: center; overflow: hidden;}
+        .card-count { font-size: 28px; font-weight: bold; color: gray; }
+        .has-ticket { border-color: var(--highlight); box-shadow: 0 0 8px rgba(0, 255, 0, 0.2); }
+        .has-ticket .card-count { color: var(--highlight); }
+
+        /* Logs */
+        .log-box {
+            background-color: #000;
+            border: 1px solid #444;
+            border-radius: 5px;
+            height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            font-family: Consolas, monospace;
+            font-size: 12px;
+            color: #ccc;
+        }
+        .log-entry { margin-bottom: 2px; }
+
+        /* === Modal (Settings) === */
+        .modal-overlay {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal {
+            background: var(--card-bg);
+            width: 500px;
+            max-width: 90%;
+            max-height: 90vh;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #444;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .modal-header { font-size: 18px; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        .modal-body { overflow-y: auto; flex: 1; padding-right: 5px; }
+
+        .form-group { margin-bottom: 15px; }
+        .form-label { display: block; margin-bottom: 5px; font-size: 13px; color: #aaa; }
+        .form-input {
+            width: 100%; box-sizing: border-box;
+            padding: 8px; background: var(--input-bg); border: 1px solid #444;
+            color: white; border-radius: 4px;
+        }
+        .form-input:focus { border-color: var(--accent-blue); outline: none; }
+        textarea.form-input { resize: vertical; min-height: 80px; font-family: monospace; font-size: 12px; }
+
+        /* Checkbox List */
+        .rules-container {
+            background: #222;
+            border: 1px solid #444;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .checkbox-item { display: flex; align-items: center; margin-bottom: 5px; font-size: 13px; }
+        .checkbox-item input { margin-right: 8px; }
+
+        /* Modal Footer */
+        .modal-footer { margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="title">🏎️ F1 Ticket Hunter <span style="font-size:12px; color:gray">Docker</span></div>
+        <div>
+            <button id="btnStart" class="btn btn-start" onclick="control('start')">▶ 启动</button>
+            <button id="btnStop" class="btn btn-stop" onclick="control('stop')" disabled>⏹ 停止</button>
+            <button class="btn btn-settings" onclick="openSettings()">⚙ 设置</button>
+        </div>
+    </div>
+
+    <div id="grid" class="grid-container">
+        <div style="color:gray">连接中...</div>
+    </div>
+
+    <div class="log-box" id="logBox"></div>
+
+    <div id="settingsModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">⚙ 系统配置</div>
+            <div class="modal-body">
+
+                <div class="form-group">
+                    <label class="form-label">Cookie (必填)</label>
+                    <textarea id="cfgCookie" class="form-input" placeholder="输入抓包获取的 Cookie"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">刷新间隔 (秒)</label>
+                    <input type="number" id="cfgInterval" class="form-input" value="3">
+                </div>
+
+                <div style="border-top: 1px solid #444; margin: 15px 0;"></div>
+                <div style="font-weight:bold; margin-bottom:10px; color: var(--accent-blue);">Telegram 通知</div>
+
+                <div class="form-group">
+                    <label class="checkbox-item" style="font-size:14px; font-weight:bold;">
+                        <input type="checkbox" id="cfgMasterSwitch"> 启用消息推送 (总开关)
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Bot Token</label>
+                    <input type="text" id="cfgToken" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Chat ID</label>
+                    <input type="text" id="cfgChatID" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">独立通知管理 (勾选即推送)</label>
+                    <div id="rulesList" class="rules-container">
+                        </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn" style="background:#444" onclick="closeSettings()">取消</button>
+                <button class="btn btn-start" onclick="saveSettings()">💾 保存并重启</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const grid = document.getElementById('grid');
+        const logBox = document.getElementById('logBox');
+        const btnStart = document.getElementById('btnStart');
+        const btnStop = document.getElementById('btnStop');
+        const modal = document.getElementById('settingsModal');
+
+        // === 核心控制 ===
+        async function control(action) {
+            await fetch('/api/control', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({action: action})
+            });
+            updateStatus();
+        }
+
+        async function updateStatus() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+
+                // 按钮状态
+                if (data.running) {
+                    btnStart.disabled = true; btnStart.style.opacity = 0.5;
+                    btnStop.disabled = false; btnStop.style.opacity = 1;
+                } else {
+                    btnStart.disabled = false; btnStart.style.opacity = 1;
+                    btnStop.disabled = true; btnStop.style.opacity = 0.5;
+                }
+
+                // 日志
+                logBox.innerHTML = data.logs.map(l => `<div class="log-entry">${l}</div>`).join('');
+
+                // 卡片
+                if (Object.keys(data.cards).length > 0) {
+                    const sortedKeys = Object.keys(data.cards).sort();
+                    grid.innerHTML = sortedKeys.map(name => {
+                        const count = data.cards[name];
+                        const cls = count > 0 ? 'has-ticket' : '';
+                        return `
+                            <div class="card ${cls}">
+                                <div class="card-title">${name}</div>
+                                <div class="card-count">${count}</div>
+                            </div>`;
+                    }).join('');
+                } else {
+                    if (data.running) grid.innerHTML = '<div style="padding:10px">正在初始化...</div>';
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        // === 设置相关逻辑 ===
+
+        async function openSettings() {
+            // 1. 获取当前配置
+            const res = await fetch('/api/config');
+            const cfg = await res.json();
+
+            // 2. 填充表单
+            document.getElementById('cfgCookie').value = cfg.cookie || "";
+            document.getElementById('cfgInterval').value = cfg.refresh_interval || 3;
+            document.getElementById('cfgToken').value = cfg.tg_token || "";
+            document.getElementById('cfgChatID').value = cfg.tg_chat_id || "";
+            document.getElementById('cfgMasterSwitch').checked = cfg.tg_master_switch !== false; // 默认 true
+
+            // 3. 生成精细化规则列表
+            const rulesContainer = document.getElementById('rulesList');
+            rulesContainer.innerHTML = "";
+
+            // 提取所有票名
+            let allZones = [];
+            if(cfg.tasks) {
+                cfg.tasks.forEach(task => {
+                    Object.values(task.targets).forEach(name => allZones.push(name));
+                });
+            }
+            allZones = [...new Set(allZones)].sort(); // 去重排序
+
+            // 渲染 Checkbox
+            allZones.forEach(zone => {
+                // 检查当前规则 (默认 true)
+                const isChecked = (cfg.notification_rules && cfg.notification_rules[zone] !== undefined)
+                                  ? cfg.notification_rules[zone]
+                                  : true;
+
+                const div = document.createElement('div');
+                div.className = 'checkbox-item';
+                div.innerHTML = `
+                    <input type="checkbox" data-zone="${zone}" ${isChecked ? 'checked' : ''}>
+                    ${zone}
+                `;
+                rulesContainer.appendChild(div);
+            });
+
+            // 4. 显示弹窗
+            modal.style.display = 'flex';
+        }
+
+        function closeSettings() {
+            modal.style.display = 'none';
+        }
+
+        async function saveSettings() {
+            // 1. 收集 Checkbox 状态
+            const rules = {};
+            document.querySelectorAll('#rulesList input[type="checkbox"]').forEach(chk => {
+                rules[chk.getAttribute('data-zone')] = chk.checked;
+            });
+
+            // 2. 构造数据
+            const payload = {
+                cookie: document.getElementById('cfgCookie').value,
+                refresh_interval: parseInt(document.getElementById('cfgInterval').value),
+                tg_token: document.getElementById('cfgToken').value,
+                tg_chat_id: document.getElementById('cfgChatID').value,
+                tg_master_switch: document.getElementById('cfgMasterSwitch').checked,
+                notification_rules: rules
+            };
+
+            // 3. 发送
+            try {
+                const res = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+                if(result.status === 'ok') {
+                    closeSettings();
+                    alert("✅ 配置保存成功，监控服务已重启！");
+                    updateStatus(); // 刷新界面
+                } else {
+                    alert("❌ 保存失败: " + result.msg);
+                }
+            } catch(e) {
+                alert("❌ 网络错误");
+            }
+        }
+
+        // 轮询
+        setInterval(updateStatus, 1500);
+        updateStatus();
+    </script>
+</body>
+</html>
