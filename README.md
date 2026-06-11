@@ -26,12 +26,33 @@ F1 上海站票务监控工具
 pip install requests customtkinter packaging
 ```
 
-### 2. 启动程序
+### 2. 准备本地配置
+推荐使用 `.env` 保存本地敏感配置：
+
+```bash
+cp .env.example .env
+```
+
+然后填写：
+
+```dotenv
+F1_MONITOR_COOKIE=
+F1_MONITOR_TG_TOKEN=
+F1_MONITOR_TG_CHAT_ID=
+F1_MONITOR_TG_MASTER_SWITCH=true
+F1_MONITOR_REFRESH_INTERVAL=3
+```
+
+也可以复制 `config.example.json` 为 `config.json` 后手动填写。`.env` 和 `config.json` 都是本地私有文件，已被 `.gitignore` 忽略，**不要提交真实 Cookie、Bot Token 或 Chat ID**。
+
+环境变量优先级高于 `config.json`，适合临时覆盖本地配置。
+
+### 3. 启动程序
 ```bash
 python main.py
 ```
 
-### 3. 配置
+### 4. 配置
 一、默认配置
 1. 程序启动后，点击右上角的 **“设置”** 按钮。
 2. **Cookie (必填)**：使用 Fiddler 或浏览器 F12 抓取 `ztwen.jussyun.com` 的请求，复制 Cookie 填入。
@@ -43,7 +64,7 @@ python main.py
 
 二、手动配置
 
-打开 **config.json**手动配置以下三个内容：
+打开本地 **config.json** 或 **.env** 手动配置以下内容：
 
     "cookie": "",
     "tg_token": "",
@@ -55,6 +76,8 @@ python main.py
 * `config_manager.py`: **配置管理**，负责读写 `config.json` 和管理票务任务列表。
 * `config_ui.py`: **设置窗口**，独立的配置界面代码。
 * `tg_bot.py`: **通知模块**，负责发送 Telegram 消息。
+* `.env.example`: **环境变量模板**，复制为 `.env` 后填写本地敏感配置。
+* `config.example.json`: **JSON 配置模板**，复制为 `config.json` 后填写本地敏感配置。
 
 ##⚠️ 注意事项* **Cookie 有效期**：久事体育的 Cookie 通常只有数小时有效期。如果日志提示“Cookie 已过期”，请重新抓包并更新。
 * **刷新频率**：建议设置在 3 秒以上，过快可能导致 IP 被暂时封禁。
