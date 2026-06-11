@@ -1,7 +1,16 @@
 import json
 import os
+from copy import deepcopy
 
 CONFIG_FILE = "config.json"
+ENV_FILE = ".env"
+ENV_KEY_MAP = {
+    "F1_MONITOR_COOKIE": "cookie",
+    "F1_MONITOR_TG_TOKEN": "tg_token",
+    "F1_MONITOR_TG_CHAT_ID": "tg_chat_id",
+    "F1_MONITOR_TG_MASTER_SWITCH": "tg_master_switch",
+    "F1_MONITOR_REFRESH_INTERVAL": "refresh_interval",
+}
 
 DEFAULT_TASKS = [
     {
@@ -194,7 +203,7 @@ DEFAULT_CONFIG = {
     "cookie": "",
     "tg_token": "",
     "tg_chat_id": "",
-    "tg_switch": False,
+    "tg_master_switch": True,
     "notification_rules": {},
     "refresh_interval": 3,
     "tasks": DEFAULT_TASKS,
@@ -212,27 +221,92 @@ DEFAULT_CONFIG = {
 
 class ConfigManager:
     @staticmethod
+    def _read_dotenv():
+        values = {}
+        if not os.path.exists(ENV_FILE):
+            return values
+
+        try:
+            with open(ENV_FILE, "r", encoding="utf-8") as f:
+                for raw_line in f:
+                    line = raw_line.strip()
+                    if not line or line.startswith("#") or "=" not in line:
+                        continue
+                    key, value = line.split("=", 1)
+                    key = key.strip()
+                    value = value.strip().strip('"').strip("'")
+                    if key:
+                        values[key] = value
+        except Exception:
+            return {}
+
+        return values
+
+    @staticmethod
+    def _parse_bool(value):
+        return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
+
+    @staticmethod
+    def _with_defaults(data):
+        config = deepcopy(DEFAULT_CONFIG)
+        config.update(data or {})
+
+        if not config.get("tasks"):
+            config["tasks"] = deepcopy(DEFAULT_TASKS)
+        if "notification_rules" not in config or config["notification_rules"] is None:
+            config["notification_rules"] = {}
+        if "headers_template" not in config:
+            config["headers_template"] = deepcopy(DEFAULT_CONFIG["headers_template"])
+        if "tg_master_switch" not in config:
+            config["tg_master_switch"] = True
+
+        return config
+
+    @staticmethod
+    def _env_overrides(dotenv_values):
+        overrides = {}
+        for env_key, config_key in ENV_KEY_MAP.items():
+            value = os.environ.get(env_key)
+            if value is None:
+                value = dotenv_values.get(env_key)
+            if value in (None, ""):
+                continue
+
+            if config_key == "tg_master_switch":
+                overrides[config_key] = ConfigManager._parse_bool(value)
+            elif config_key == "refresh_interval":
+                try:
+                    overrides[config_key] = int(value)
+                except ValueError:
+                    pass
+            else:
+                overrides[config_key] = value
+
+        return overrides
+
+    @staticmethod
     def load_config():
         """加载配置"""
+        dotenv_values = ConfigManager._read_dotenv()
+        env_overrides = ConfigManager._env_overrides(dotenv_values)
+
         if not os.path.exists(CONFIG_FILE):
+            if env_overrides:
+                return ConfigManager._with_defaults(env_overrides)
             return None
+
         try:
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
-
-                if "tasks" not in data:
-                    data["tasks"] = DEFAULT_TASKS
-                if "tg_master_switch" not in data:
-                    data["tg_master_switch"] = True
-                if "notification_rules" not in data:
-                    data["notification_rules"] = {}
-                return data
+                config = ConfigManager._with_defaults(data)
+                config.update(env_overrides)
+                return config
         except Exception:
             return None
 
     @staticmethod
     def save_config(cookie, tg_token, tg_chat_id, tg_master_switch, notification_rules, refresh_interval=3):
-        current_data = DEFAULT_CONFIG.copy()
+        current_data = deepcopy(DEFAULT_CONFIG)
 
         if os.path.exists(CONFIG_FILE):
             try:
@@ -245,7 +319,7 @@ class ConfigManager:
             except:
                 pass
         else:
-            current_data["tasks"] = DEFAULT_TASKS
+            current_data["tasks"] = deepcopy(DEFAULT_TASKS)
 
         current_data["cookie"] = cookie.strip()
         current_data["tg_token"] = tg_token.strip()

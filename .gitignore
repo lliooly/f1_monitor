@@ -1,0 +1,36 @@
+# Local secrets and runtime configuration
+.env
+.env.*
+!.env.example
+config.json
+config.local.json
+*TGKey*
+
+# Python cache and virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# Test and tooling cache
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Logs and local data
+*.log
+logs/
+
+# IDE and OS metadata
+.idea/
+.vscode/
+.DS_Store
